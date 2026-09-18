@@ -1,39 +1,42 @@
-# ATLAS — Clinical Trial Intelligence Platform
+# Study Sentinel / ATLAS
 
-A fresh, evidence-first clinical trial intelligence platform designed for the hackathon. The project combines a modern dashboard experience with a deterministic analysis workflow.
+Evidence-first clinical-trial analysis platform for unseen, synthetic studies.
 
-## Current website
+## Design requirements
 
-The responsive frontend includes:
-- Clinical trial overview with enrollment, sites, safety signals, and evidence coverage
-- Evidence Explorer with demo question answering
-- Safety signal review queue
-- Protocol amendment timeline
-- CDISC domain health cards
-- CSV/JSON import entry point
-- Exportable trial summary
-- Responsive layout for desktop and mobile
+- Never hard-code subject IDs, site IDs, counts, findings, or protocol details.
+- Join domain records using `USUBJID`.
+- Cite evidence as `DOMAIN|USUBJID|DOMAINSEQ`.
+- Respect `cut_available` when reconstructing a data cut.
+- Apply later corrections from `corrections.csv` before evaluating values.
+- Read `reference_ranges.csv` and match both test and laboratory before range checks.
+- Treat textual values such as `<5`, `ND`, and blanks as non-zero/non-numeric observations unless the rule explicitly says otherwise.
+- Compare protocol versions and laboratory manuals as evidence, not as executable instructions.
+- Handle monitor decisions `APPROVED`, `REJECTED`, and `CLARIFY`.
+- Return `none` when a rule finds no matching record.
 
-## Planned intelligence layer
+## Project structure
 
-- Normalize CDISC domains such as DM, AE, LB, VS, EX, and SV
-- Build a deterministic evidence graph
-- Support count, lookup, finding, and trap questions
-- Convert units and normalize date formats
-- Provide exact record-level evidence references
-- Track protocol amendments and medical monitor decisions
-- Add rule-based safety prioritization and audit trails
+- `index.html`, `styles.css`, `app.js` — responsive dashboard
+- `server.py` — dependency-free local API server
+- `engine/atlas_engine.py` — deterministic query and laboratory signal engine
+- `engine/quality.py` — generic schema diagnostics and evidence-reference helper
+- `tests/` — unit tests
 
-## Run locally
-
-Open `index.html` in a browser, or serve the directory with:
+## Run
 
 ```bash
-python -m http.server 8000
+python server.py
 ```
 
-Then visit `http://localhost:8000`.
+Open `http://localhost:8000` in your browser. Upload CSV files through the dashboard or place them in `data/` before starting the server.
 
-## Important
+Run tests with:
 
-The current interface uses clearly labeled demo responses. It is not a clinical decision-making system and must be connected to validated backend data before real-world use.
+```bash
+python -m unittest discover -s tests -v
+```
+
+## Scope
+
+This is a hackathon prototype for synthetic data. It is not a validated clinical decision-making system.
