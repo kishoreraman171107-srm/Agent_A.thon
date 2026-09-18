@@ -11,6 +11,7 @@ from engine.atlas_engine import AtlasEngine
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / "data"
 
+
 def load_demo() -> AtlasEngine:
     files = {}
     if DATA.exists():
@@ -18,7 +19,9 @@ def load_demo() -> AtlasEngine:
             files[path.name] = path.read_text(encoding="utf-8")
     return AtlasEngine.from_csv_texts(files)
 
+
 ENGINE = load_demo()
+
 
 class Handler(BaseHTTPRequestHandler):
     def _send(self, status: int, payload: dict):
@@ -48,6 +51,7 @@ class Handler(BaseHTTPRequestHandler):
         return self._send(404, {"error": "Not found"})
 
     def do_POST(self):
+        global ENGINE
         path = urlparse(self.path).path
         length = int(self.headers.get("Content-Length", "0"))
         try:
@@ -55,16 +59,15 @@ class Handler(BaseHTTPRequestHandler):
         except json.JSONDecodeError:
             return self._send(400, {"error": "Invalid JSON"})
         if path == "/api/query":
-            question = str(payload.get("question", ""))
-            return self._send(200, ENGINE.query(question))
+            return self._send(200, ENGINE.query(str(payload.get("question", ""))))
         if path == "/api/load":
             files = payload.get("files", {})
             if not isinstance(files, dict):
                 return self._send(400, {"error": "files must be an object"})
-            global ENGINE
             ENGINE = AtlasEngine.from_csv_texts({str(k): str(v) for k, v in files.items()})
             return self._send(200, {"ok": True, "summary": ENGINE.summary()})
         return self._send(404, {"error": "Not found"})
+
 
 if __name__ == "__main__":
     print("ATLAS API running at http://localhost:8000")
